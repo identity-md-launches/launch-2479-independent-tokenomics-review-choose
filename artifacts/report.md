@@ -38,7 +38,7 @@ Written 2026-10-22. For SIMD/IMD holders; no technical background needed. Formul
 
 ### 1.1 Assumptions for the pool math
 - The new supply is 1,000,000,000 tokens. The brief does not give it, but every result is a percentage of supply, so the exact number does not matter.
-- The pool behaves like a plain constant-product pool (x·y = k). The Uniswap-v4-style factory may use concentrated ranges, and those make price drops *bigger* than shown here.
+- The pool behaves like a plain constant-product pool (x·y = k). The Uniswap-v4-style factory may use concentrated ranges; without the actual range and reserve state, impact could be either better or worse than this simple model.
 - Fees, arbitrage and new buyers are ignored. This is a stress test, not a forecast.
 
 > **Price drop formula.** If someone sells *s* tokens into a pool that holds *P* tokens, the price afterwards is **(P / (P + s))²** times the starting price. The IMD side cancels out of this ratio.
@@ -92,7 +92,7 @@ Hybrid: **option 4 (30% over 30 days) with the migration victims ranked first**.
 
 1. **Wrong-headcount risk.** Stage 1 repeats "62 wallets", but the team's own pages say 63 (F3). A Merkle root with one wallet missing is permanent. *Must fix: reconcile 62 vs 63 before any root is final.*
 2. **Double counting was flagged but not costed.** Option 4's "30% over 830M" understates what migrators get *and* overstates what others get if migrators also receive a separate tranche. Stage 1 never gave per-group coverage numbers.
-3. **The stress test is too gentle on concentrated liquidity.** V4 ranges can make impact far worse. Stage 1 states this but still scores option 3 at 6 for liquidity health. A 40% drop if all of option 3's airdrop is sold is not a 6.
+3. **The stress test does not describe the deployed liquidity curve.** A v4 position's range can change local depth in either direction; no position data was supplied. Stage 1's 6 for option 3's pool health is therefore only a judgment under the stated CPMM assumption, not a fact about the launch pool. Under the model, selling all of option 3's airdrop drops marginal price by about 39.5%.
 4. **Bias toward the status quo.** Option 1 scored 10 for verification, partly because its Merkle root is already published. But that root is for a plan holders already distrust. "Easy to verify" is not the same as "trusted".
 5. **Option 7 was dismissed without math.** Only the holders' 40% of 0.75% could fund it, so 0.30% of volume. Repaying just the ~3.4 ETH realized from the dumped SIMD needs ~**1,133 ETH** of trading volume [C]. Repaying 3.4 + 1.6 ETH needs ~1,667 ETH. Stated that way, option 7 is clearly a non-answer for a small token. Stage 1 still gave it 37, a higher total than option 3 or 5.
 6. **The anti-sniper tax is oversold.** It averages ~24.6% extra tax over the window [C], but a 50% tax mostly *stops* buys, and the brief says buyers are the same community. Expect little revenue. Do not count it as compensation in any coverage figure.
@@ -198,6 +198,7 @@ Option 2's fairness score is 4, not 7. Getting 96% of a token that is down ~90% 
 - One Merkle root per tranche, immutable, built by a published script from public chain data so anyone can rebuild it.
 - Claim-based (pull). Unclaimed tokens after **180 days** go to the holders' share of the SIMD vault, never to the team.
 - No per-wallet minimums or bonuses, because they would reward sybil splitting.
+- The vault may distribute anti-sniper buyback tokens to tranche A only from realized receipts after the 30-minute window. Base A+B grants total exactly 25% of supply. Buyback distributions are capped at a further 55% of supply, so total compensation distributions cannot exceed the 80% hard limit; amounts above that cap are burned. Buybacks must stop before the pool's token reserve drops below 10% of supply. The contract must not mint to satisfy a buyback promise, and the tax amount is not included in advertised coverage until collected.
 
 **Robinhood "Super IMD" buyers:** no token allocation at launch. The ledger is unverified, and the team publicly disowned that contract (F9). Publish a clear written answer, and keep an open offer for a future vote *if* a verifiable pre-rug buy ledger is produced.
 
