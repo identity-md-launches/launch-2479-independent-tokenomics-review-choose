@@ -7,7 +7,8 @@ Assumptions (also stated in the report):
 - New supply S = 1,000,000,000 (same as old supply; the brief does not give the new supply,
   but every result below is a percentage of supply, so the absolute value does not matter).
 - The pool is a plain constant-product pool x*y=k holding P new tokens against some amount
-  of IMD. Concentrated-liquidity (Uniswap v4 style) ranges make impact WORSE than this.
+  of IMD. A concentrated-liquidity (Uniswap v4 style) range could make impact either better
+  or worse than this; no range or reserve data was supplied.
 - Price impact of selling s tokens into a pool of P tokens: new_price/old_price = (P/(P+s))^2.
   This ratio does not depend on how much IMD is in the pool.
 - Fees (2%) and arbitrage/new buys are ignored: this is a stress test, not a forecast.
@@ -98,8 +99,36 @@ check("average extra tax in window", extra, 0.246)
 # Option 7: only the holders' 40% of the 0.75% hook fee could fund it -> 0.30% of volume.
 share = 0.0075 * 0.40
 check("vault holder share of volume", share, 0.003, tol=1e-9)
-check("volume (ETH) to repay 3.4 ETH", 3.4 / share, 1133.3, tol=0.5)
-check("volume (ETH) to repay 3.4+1.6 ETH", 5.0 / share, 1666.7, tol=0.5)
+# 3.4 ETH is what the thief realised after slippage, not the holders' loss. Back out the ETH
+# reserve y from proceeds = y*s/(P+s) with P = tokens in the pool at the snapshot (17% of supply),
+# then value the dumped tokens at the pre-dump marginal price y/P.
+P_OLD = S - OLD_HELD
+proceeds = 3.4
+y = proceeds * (P_OLD + MIGRATED) / MIGRATED
+loss = MIGRATED * y / P_OLD
+check("implied pool ETH reserve before dump", y, 6.27, tol=0.01)
+check("pre-dump value of migrated SIMD (ETH)", loss, 7.42, tol=0.01)
+check("volume (ETH) to repay pre-dump value", loss / share, 2474, tol=2)
+check("volume (ETH) to repay 3.4 ETH lower bound", 3.4 / share, 1133.3, tol=0.5)
+check("volume (ETH) to repay pre-dump value + 1.6 ETH IMD", (loss + 1.6) / share, 3008, tol=1)
+
+print("\n== Tranche rules (worked examples from the report) ==")
+
+
+def tranche_b_credit(bal_snap, bal_b2, sent_by_b2, credited_a):
+    return max(0, min(bal_snap, bal_b2 + sent_by_b2) - credited_a)
+
+
+# Partial migrator: 100 at snapshot, 40 migrated before B2, 60 held at B2 -> 60 (not 20).
+check("B credit, partial migrator", tranche_b_credit(100, 60, 40, 40), 60, tol=0)
+# Migrated after B2 (still inside window E): 100 held at B2, 40 sent later -> 60.
+check("B credit, migrated after B2", tranche_b_credit(100, 100, 0, 40), 60, tol=0)
+# Non-migrator who moved/sold after B2 keeps full credit (balance@B2 is pre-dump).
+check("B credit, holder who moved after B2", tranche_b_credit(1_000_000, 1_000_000, 0, 0), 1_000_000, tol=0)
+# Late sender (after block E) is not credited in A, so stays in B at the B rate.
+late = 50_000_000
+check("late sender gets B only (M tokens)", late * B / B_BASE / 1e6, 10.34, tol=0.01)
+check("if late senders were admitted, A coverage would fall to", A / (MIGRATED + late), 0.478)
 
 failed = [n for n, ok in checks if not ok]
 print(f"\n{len(checks) - len(failed)}/{len(checks)} checks passed")
