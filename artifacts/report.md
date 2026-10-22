@@ -245,3 +245,18 @@ Option 2's fairness score is 4, not 7. Getting 96% of a token that is down ~90% 
 - What is the new token supply, and how much IMD seeds the pool? (Percent impacts don't need them; dollar values do.)
 - How many Robinhood rug buyers were there, and is there a ledger of their buys?
 - Does the factory allow a 65/25 split, or only the 80/10 in the published design (F8)? If it is fixed at 80/10, H cannot be deployed without a factory change.
+
+---
+
+## Addendum (2026-10-22): fallback if the factory cannot do 65/25
+
+**[?]** Whether the factory accepts a 65/25 split is unconfirmed. The team's published design is 80/10 (F8). If only that split is possible, keep the same rules and shrink the amounts [C, by hand: 60/201.15 and 40/628.85]:
+
+| Item | Hybrid H (65/10/25) | Fallback (80/10/10) |
+|---|---|---|
+| Pool | 65% | 80% |
+| Tranche A (migration victims) | 12% = 59.7% coverage | 6% = about 29.8% coverage |
+| Tranche B (other holders) | 13% = about 20.7% coverage | 4% = about 6.4% coverage |
+| Worst-case 72h price drop if all claimable tokens are sold | about 14% | smaller, but the compensation is also much smaller |
+
+**[J]** The fallback is much weaker for holders. It does not fix the trust problem the brief describes ("won't buy again unless made whole"). If the team can only offer the fallback, say so plainly instead of calling it "compensation in full", and treat H as a request for a factory change.
